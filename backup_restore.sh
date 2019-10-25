@@ -1,10 +1,24 @@
 #!/bin/bash
 
-backup_dir=/opt/data/expansao
-script_exec_dir=/opt/data/
-backup_files=$backup_dir/*
-log_file=/opt/data/expansao/log_restore.txt
+########################################################################################
+# Para executar este script e necessario ter uma lista dos nomes das US  que coinscide com
+# o nome dos dumps num ficheiro de texto, disposto destda seguinte forma:
+# Ficheiro ->  us_names.txt
+# urbano
+# hpi
+# salela
+# mahangue
+#  ...
 
+#################################################################
+# Directorio onde ficam guardados os dumps 
+backup_dir=/opt/data/expansao
+# Directorio onde fica este o script (backup_restore.sh)
+script_exec_dir=/opt/data
+backup_files=$backup_dir/*
+log_file=$backup_dir/log_restore.txt
+us_names=$backup_dir/us_names.txt
+# Credenciais para acesso MySQL
 MySQL_username='root'
 MySQL_pass='password'
 
@@ -75,7 +89,7 @@ remove_white_spaces
 # Add exception handling later
 cd  $script_exec_dir
 declare -a us_names
-readarray -t us_names < us_names.txt
+readarray -t us_names < $us_names
 
 
 
