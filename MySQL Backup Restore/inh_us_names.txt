@@ -1,6 +1,7 @@
 mapinhane
 maundene
 panda
+bembe
 jangamo
 zandamela
 pambara
@@ -10,10 +11,7 @@ mabil
 chicuque
 massinga
 morrumbene
-salela
-hpi
 doane
-agostinho
 funhalouro
 manhala
 inharrime
@@ -22,8 +20,8 @@ mangungumete
 homoine
 urbano
 quissico
-vilanculos
 muele
 chibuene
 cumbana
 mabote
+vilankulos

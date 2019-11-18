@@ -29,22 +29,23 @@ function fix_wrong_file_names () {
    find $backup_dir -type f -name "*dumpxx*" | sed -e "p;s/dumpxx/csxaixai/" | xargs -n2 mv 
    find $backup_dir -type f -name "*mussabele*" | sed -e "p;s/mussabele/mussavelene/" | xargs -n2 mv 
    find $backup_dir -type f -name "*mubangoene*" | sed -e "p;s/mubangoene/mubanguene/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*chibabel*" | sed -e "p;s/chibabel/chibabelnovo/" | xargs -n2 mv  
 
+     find $backup_dir -type f -name "*combumune*" | sed -e "p;s/combomune/mubanguene/" | xargs -n2 mv 
    find $backup_dir -type f -name "*nhavaquene*" | sed -e "p;s/nhavaquene/nwavaquene/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*milenio*" | sed -e "p;s/milenio/vilamilenio/" | xargs -n2 mv 
+   find $backup_dir -type f -name "*vmilenio*" | sed -e "p;s/vmilenio/vilamilenio/" | xargs -n2 mv 
    find $backup_dir -type f -name "*vlenine*" | sed -e "p;s/vlenine/vladmirlenine/" | xargs -n2 mv 
    find $backup_dir -type f -name "*mangul*" | sed -e "p;s/mangul/mangol/" | xargs -n2 mv  
 
    find $backup_dir -type f -name "*mangundze*" | sed -e "p;s/mangundze/mangunze/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*lawane*" | sed -e "p;s/lawane/tlawene/" | xargs -n2 mv 
+   find $backup_dir -type f -name "*tlawane*" | sed -e "p;s/lawane/tlawene/" | xargs -n2 mv 
    find $backup_dir -type f -name "*hpxx*" | sed -e "p;s/hpxx/hpxaixai/" | xargs -n2 mv 
    find $backup_dir -type f -name "*nhacutse*" | sed -e "p;s/nhacutse/nhancutse/" | xargs -n2 mv   
 
-   find $backup_dir -type f -name "*lumumba*" | sed -e "p;s/lumumba/patricelumumba/" | xargs -n2 mv 
+   find $backup_dir -type f -name "*plumunba*" | sed -e "p;s/plumunba/patricelumumba/" | xargs -n2 mv 
    find $backup_dir -type f -name "*jnherere*" | sed -e "p;s/jnherere/juliusnyerere/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*goabi*" | sed -e "p;s/goabi/marienngoabi/" | xargs -n2 mv 
+   find $backup_dir -type f -name "*mngoabi*" | sed -e "p;s/mngoabi/_marienngoabi/" | xargs -n2 mv 
    find $backup_dir -type f -name "*praiaxaixai*" | sed -e "p;s/praiaxaixai/praiaxx/" | xargs -n2 mv   
+
 
 }
 
@@ -60,6 +61,9 @@ function unzip_backup () {
    if [ $? -eq 0 ]; then
        echo "File $file decompressed sucessfully"
        remove_white_spaces
+       rename 'y/A-Z/a-z/' *
+       fix_wrong_file_names
+       echo "All ok!"
    else
        echo "Error decompressing file $file ! It may be corrupted"
       log "Error decompressing file  $file ! It may be corrupted"
@@ -74,6 +78,9 @@ function unrar_backup () {
    if [ $? -eq 0 ]; then
        echo "File $file decompressed sucessfully"
        remove_white_spaces
+       rename 'y/A-Z/a-z/' *
+       fix_wrong_file_names
+        echo "All ok!"
    else
        echo "Error decompressing file $file ! It may be corrupted"
        log "Error decompressing file  $file ! It may be corrupted"
@@ -88,6 +95,9 @@ function untar_backup () {
    if [ $? -eq 0 ]; then
        echo "File $file decompressed sucessfully"
        remove_white_spaces
+       rename 'y/A-Z/a-z/' *
+       fix_wrong_file_names
+       echo "All ok!"
    else
        echo "Error decompressing file $file ! It may be corrupted"
        log "Error decompressing file  $file ! It may be corrupted"
@@ -103,13 +113,13 @@ function import_database () {
    /usr/bin/mysql -u$MySQL_username -p$MySQL_pass -e "create database $us_name ;"
    /usr/bin/mysql -u$MySQL_username -p$MySQL_pass $us_name < $file
    if [ $? -eq 0 ]; then
-       echo "Backup   $file imported sucessfully"
        log "Backup   $file imported sucessfully"
+       echo "Backup   $file imported sucessfully"
        rm -f $file
    else
        echo "Error importing file $file into MySQL! It may be corrupted"
        log "Error importing file  $file  into MySQL!! It may be corrupted"
-       rm -f $file
+         
   fi
 }
 
@@ -134,7 +144,11 @@ find -name "* *" -type f | rename 's/ /_/g'
 cd $backup_dir
 echo "" > log_restore.txt
 remove_white_spaces
+#convert filenames in current directory to lowercase
+rename 'y/A-Z/a-z/' *
+#find . -depth -exec rename 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
 fix_wrong_file_names
+
 
 # Importar nome de US para array
 # Add exception handling later
@@ -166,6 +180,7 @@ do
                     echo "Importing $sql_file into MySQL"
                     log "Importing $sql_file into MySQL"
                     new_name="openmrs_gz_$us"
+                    sed -i -e 's/USE `openmrs`;//g' $sql_file
                     import_database $sql_file $new_name
                else
                     echo "Error!!! Check mgs above!"
@@ -179,12 +194,13 @@ do
                     echo "Importing $sql_file into MySQL"
                      log "Importing $sql_file into MySQL"
                      new_name="openmrs_gz_$us"
+                     sed -i -e 's/USE `openmrs`;//g' $sql_file
                      import_database $sql_file $new_name
                 else
                     echo "Error!!! Check mgs above!"
                fi
         elif [ "$extension" = "rar" ]; then
-               untar_backup $base_name  
+               unrar_backup $base_name  
                if [ $? -eq 0 ]; then
                     temp_file="${filename%.*}"
                     sql_file="${temp_file}.sql"
@@ -192,6 +208,7 @@ do
                     echo "Importing $sql_file into MySQL"
                     log "Importing $sql_file into MySQL"
                      new_name="openmrs_gz_$us"
+                     sed -i -e 's/USE `openmrs`;//g' $sql_file
                      import_database $sql_file $new_name
                 else
                     echo "Error!!! Check mgs above!"

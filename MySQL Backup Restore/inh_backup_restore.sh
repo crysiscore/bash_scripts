@@ -34,6 +34,9 @@ function unzip_backup () {
    if [ $? -eq 0 ]; then
        echo "File $file decompressed sucessfully"
        remove_white_spaces
+       rename 'y/A-Z/a-z/' *
+       fix_wrong_file_names
+        echo "All ok!"
    else
        echo "Error decompressing file $file ! It may be corrupted"
       log "Error decompressing file  $file ! It may be corrupted"
@@ -48,6 +51,9 @@ function untar_backup () {
    if [ $? -eq 0 ]; then
        echo "File $file decompressed sucessfully"
        remove_white_spaces
+       rename 'y/A-Z/a-z/' *
+       fix_wrong_file_names
+       echo "All ok!"
    else
        echo "Error decompressing file $file ! It may be corrupted"
        log "Error decompressing file  $file ! It may be corrupted"
@@ -65,9 +71,11 @@ function import_database () {
    if [ $? -eq 0 ]; then
        log "Backup   $file imported sucessfully"
        echo "Backup   $file imported sucessfully"
+         rm -f $file
    else
        echo "Error importing file $file into MySQL! It may be corrupted"
        log "Error importing file  $file  into MySQL!! It may be corrupted"
+         
   fi
 }
 
@@ -94,6 +102,9 @@ function fix_wrong_file_names () {
 cd $backup_dir
 echo "" > log_restore.txt
 remove_white_spaces
+#convert filenames in current directory to lowercase
+rename 'y/A-Z/a-z/' *
+#find . -depth -exec rename 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
 fix_wrong_file_names
 
 # Importar nome de US para array
