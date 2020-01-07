@@ -3,51 +3,24 @@
 ########################################################################################
 # Para executar este script e necessario ter uma lista dos nomes das US  que coinscide com
 # o nome dos dumps num ficheiro de texto, disposto destda seguinte forma:
-# Ficheiro ->  gz_us_names.txt
-#zuza
-#malhazine
-#mocotuene
-#chipadja
+# Ficheiro ->  us_names.txt
+# urbano
+# hpi
+# salela
+# mahangue
 #  ...
 
 #################################################################
-# Directorio onde ficam guardados os dumps 
-backup_dir=/home/administrator/bck/Q42019/Gaza
-# Directorio onde fica este o script (gz_backup_restore.sh)
-script_exec_dir=/home/administrator/bck/Q42019/
+# Directorio onde ficam guardados os dumps
+backup_dir=/home/administrator/openmrs/backups/Q12020
+# Directorio onde fica este o script (backup_restore.sh)
+script_exec_dir=/home/administrator/openmrs/backups
 backup_files=$backup_dir/*
-log_file=$backup_dir/log_restore.txt
-us_names=$script_exec_dir/gz_us_names.txt
+log_file=$script_exec_dir/log_restore.txt
+us_names=$script_exec_dir/inh_us_names.txt
 # Credenciais para acesso MySQL
-MySQL_username='admin'
-MySQL_pass='Op3nMRS'
-
- 
-#  Rename gaza  backups with wrong names 
-function fix_wrong_file_names () {
-
-   find $backup_dir -type f -name "*dumpxx*" | sed -e "p;s/dumpxx/csxaixai/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*mussabele*" | sed -e "p;s/mussabele/mussavelene/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*mubangoene*" | sed -e "p;s/mubangoene/mubanguene/" | xargs -n2 mv 
-
-     find $backup_dir -type f -name "*combumune*" | sed -e "p;s/combumune/combomune/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*nhavaquene*" | sed -e "p;s/nhavaquene/nwavaquene/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*vmilenio*" | sed -e "p;s/vmilenio/vilamilenio/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*vlenine*" | sed -e "p;s/vlenine/vladmirlenine/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*mangul*" | sed -e "p;s/mangul/mangol/" | xargs -n2 mv  
-
-   find $backup_dir -type f -name "*mangundze*" | sed -e "p;s/mangundze/mangunze/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*tlawane*" | sed -e "p;s/lawane/tlawene/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*hpxx*" | sed -e "p;s/hpxx/hpxaixai/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*nhacutse*" | sed -e "p;s/nhacutse/nhancutse/" | xargs -n2 mv   
-
-   find $backup_dir -type f -name "*plumunba*" | sed -e "p;s/plumunba/patricelumumba/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*jnherere*" | sed -e "p;s/jnherere/juliusnyerere/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*mngoabi*" | sed -e "p;s/mngoabi/_marienngoabi/" | xargs -n2 mv 
-   find $backup_dir -type f -name "*praiaxaixai*" | sed -e "p;s/praiaxaixai/praiaxx/" | xargs -n2 mv   
-
-
-}
+MySQL_username='esaude'
+MySQL_pass='esaude'
 
 function rename_backup () {
    local file=$1
@@ -63,27 +36,10 @@ function unzip_backup () {
        remove_white_spaces
        rename 'y/A-Z/a-z/' *
        fix_wrong_file_names
-       echo "All ok!"
-   else
-       echo "Error decompressing file $file ! It may be corrupted"
-      log "Error decompressing file  $file ! It may be corrupted"
-      return 1
-  fi
-}
-
-function unrar_backup () {
-   local file=$1
-   echo "Extracting rar  $file ..."
-   unrar e  $file
-   if [ $? -eq 0 ]; then
-       echo "File $file decompressed sucessfully"
-       remove_white_spaces
-       rename 'y/A-Z/a-z/' *
-       fix_wrong_file_names
         echo "All ok!"
    else
        echo "Error decompressing file $file ! It may be corrupted"
-       log "Error decompressing file  $file ! It may be corrupted"
+      log "Error decompressing file  $file ! It may be corrupted"
       return 1
   fi
 }
@@ -115,7 +71,7 @@ function import_database () {
    if [ $? -eq 0 ]; then
        log "Backup   $file imported sucessfully"
        echo "Backup   $file imported sucessfully"
-       rm -f $file
+         rm -f $file
    else
        echo "Error importing file $file into MySQL! It may be corrupted"
        log "Error importing file  $file  into MySQL!! It may be corrupted"
@@ -129,35 +85,39 @@ function log () {
 
 }
 
-
-
-
 function remove_white_spaces () {
 # Remover espacos em branco nos nomes dos backups
 cd $backup_dir
 find -name "* *" -type f | rename 's/ /_/g'
 
 }
+#  Rename gaza  backups with wrong names 
+function fix_wrong_file_names () {
 
+   find $backup_dir -type f -name "*hrv*" | sed -e "p;s/hrv/vilanculos/" | xargs -n2 mv 
+
+}
 
 ## Setting things up
 cd $backup_dir
-echo "" > log_restore.txt
+
 remove_white_spaces
 #convert filenames in current directory to lowercase
 rename 'y/A-Z/a-z/' *
 #find . -depth -exec rename 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
 fix_wrong_file_names
 
-
 # Importar nome de US para array
 # Add exception handling later
 cd  $script_exec_dir
+echo "" > $log_file
 declare -a us_names
 readarray -t us_names < $us_names
 
 
 
+## Para cada US verificar se existe o backup
+## Caso nao,  saltar para o prox US
 cd $backup_dir
 
 for us in "${us_names[@]}"
@@ -179,10 +139,7 @@ do
                     #ls -al $sql_file
                     echo "Importing $sql_file into MySQL"
                     log "Importing $sql_file into MySQL"
-                    new_name="openmrs_gz_$us"
-                    
-                    sed -i -e 's/USE `openmrs`;//g' $sql_file
-                    sed -i -e 's/USE `openmrs`;//g' $sql_file
+                    new_name="openmrs_inh_$us"
                     import_database $sql_file $new_name
                else
                     echo "Error!!! Check mgs above!"
@@ -195,23 +152,8 @@ do
                     #ls -al $sql_file
                     echo "Importing $sql_file into MySQL"
                      log "Importing $sql_file into MySQL"
-                     new_name="openmrs_gz_$us"
-                     sed -i -e 's/USE `openmrs`;//g' $sql_file
-                     import_database $sql_file $new_name
-                else
-                    echo "Error!!! Check mgs above!"
-               fi
-        elif [ "$extension" = "rar" ]; then
-               unrar_backup $base_name  
-               if [ $? -eq 0 ]; then
-                    temp_file="${filename%.*}"
-                    sql_file="${temp_file}.sql"
-                    #ls -al $sql_file
-                    echo "Importing $sql_file into MySQL"
-                    log "Importing $sql_file into MySQL"
-                     new_name="openmrs_gz_$us"
-                     sed -i -e 's/USE `openmrs`;//g' $sql_file
-                     import_database $sql_file $new_name
+                     new_name="openmrs_inh_$us"
+                    import_database $sql_file $new_name
                 else
                     echo "Error!!! Check mgs above!"
                fi

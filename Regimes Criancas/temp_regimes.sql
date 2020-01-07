@@ -168,7 +168,8 @@ select   distinct	pid.identifier NID,
 					o.concept_id=1711  
         
         ) dosagem on dosagem.data_dosagem=regime.data_regime and dosagem.patient_id=regime.patient_id 
-        		left  join (
+        
+		left  join (
         
         select  o.value_datetime ,
             	p.patient_id,
@@ -180,8 +181,9 @@ select   distinct	pid.identifier NID,
 					and o.concept_id=5096  
         
         ) prox_lev on prox_lev.encounter_datetime=regime.data_regime and prox_lev.patient_id=regime.patient_id 
-     
-                  
+        
+          
+        
     left join (
         
        Select 	p.patient_id,e.encounter_datetime ,o.value_numeric as peso
