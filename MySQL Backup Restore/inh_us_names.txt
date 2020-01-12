@@ -36,7 +36,7 @@ inhaloi
 muvamba
 nhachengue
 chiundze
-mucodoene
+mocudoene
 cambine
 inhassune
 belane
@@ -46,4 +46,4 @@ cangela
 mahangue
 canda
 cala 
-Chitondo
+chitondo
