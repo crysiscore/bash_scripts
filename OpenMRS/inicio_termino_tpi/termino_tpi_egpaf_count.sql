@@ -1,5 +1,5 @@
 
-use openmrs_inh_quissico;
+use openmrs;
 
 set @startDate := '2019-10-21 00:00:00';  
 set @endDate := '2020-02-21 00:00:00';

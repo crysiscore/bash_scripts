@@ -1,25 +1,28 @@
 
-use openmrs;
 
 set @startDate := '2020-01-21 00:00:00';  
 set @endDate := '2020-02-20 00:00:00';
 
+
+
+use openmrs;
+
 select property_value into @location from global_property  where property='default_location';
 
 select 	
-       -- pid.identifier identifier,
-		-- visita.patient_id,
-       -- iniciaprofilaxiainh.data_consulta_inicio_inh,
-	   --  iniciaprofilaxiainh.inicia_profilaxia_inh,
-       --  terminoprofilaxiainh.data_consulta_fim_inh,
-	   -- 	terminoprofilaxiainh.termino_profilaxia_inh,
-		-- profilaxiainh.numero_profilaxia_inh,
-		-- concat(ifnull(pn.given_name,''),' ',ifnull(pn.middle_name,''),' ',ifnull(pn.family_name,'')) as NomeCompleto,
-		-- pe.gender,
-		  @location as 'Unidade Sanitaria',
-          concat('Inicio TPI de: ', date(@startDate), ' a ', date(@endDate)) as Profilaxia,
-         sum(if(datediff(@endDate,pe.birthdate)/365 < 14, 1,0 )) as 'under 14', 
-		 sum(if(datediff(@endDate,pe.birthdate)/365 > 14, 1,0 )) as ' 14+'
+		  ' Inicia  TPI' as EstadoTPI,
+           pid.identifier identifier,
+           visita.patient_id,
+           iniciaprofilaxiainh.data_consulta_inicio_inh as data_inicio_tpi,
+           '' as data_conclusao_tpi,
+           '' as NrLevantamentos,
+           concat(ifnull(pn.given_name,''),' ',ifnull(pn.middle_name,''),' ',ifnull(pn.family_name,'')) as NomeCompleto,
+           pe.gender,
+           datediff(@endDate,pe.birthdate)/365 as age,
+		   @location as 'Unidade Sanitaria'
+--           concat('Inicio TPI de:                    ', date(@startDate), ' a ', date(@endDate)) as Profilaxia,
+--          sum(if(datediff(@endDate,pe.birthdate)/365 < 14, 1,0 )) as 'under 14', 
+-- 		 sum(if(datediff(@endDate,pe.birthdate)/365 > 14, 1,0 )) as ' 14+'
          
 from		
 
@@ -76,25 +79,26 @@ select 	e.patient_id,  min(o.obs_datetime) as inicia_profilaxia_inh, e.encounter
            and o.concept_id=6122  and o.value_coded=1256  and o.voided=0	
            group by e.patient_id
            
-	) iniciaprofilaxiainh on visita.patient_id=iniciaprofilaxiainh.patient_id
+) iniciaprofilaxiainh on visita.patient_id=iniciaprofilaxiainh.patient_id
     
 union all
 
 
 select 	
-       -- pid.identifier identifier,
-		-- visita.patient_id,
-       -- iniciaprofilaxiainh.data_consulta_inicio_inh,
-	   --  iniciaprofilaxiainh.inicia_profilaxia_inh,
-       --  terminoprofilaxiainh.data_consulta_fim_inh,
-	   -- terminoprofilaxiainh.termino_profilaxia_inh,
-		-- profilaxiainh.numero_profilaxia_inh,
-		-- concat(ifnull(pn.given_name,''),' ',ifnull(pn.middle_name,''),' ',ifnull(pn.family_name,'')) as NomeCompleto,
-		-- pe.gender,
-          @location as 'Unidade Sanitaria',
-         concat('Termino TPI de: ', date(@startDate), ' a ', date(@endDate)) as Profilaxia,
-         sum(if(datediff(@endDate,pe.birthdate)/365 < 14, 1,0 )) as 'under 14', 
-		 sum(if(datediff(@endDate,pe.birthdate)/365 > 14, 1,0 )) as ' 14+'
+        'Termina TPI' as EstadoTPI,
+         pid.identifier identifier,
+		 visita.patient_id,
+         if(inicioantigo.inicia_profilaxia is null,iniciaprofilaxiainh.data_consulta_inicio_inh , inicioantigo.inicia_profilaxia) as data_inicio_tpi,
+         terminoprofilaxiainh.fim_profilaxia_inh  as data_conclusao_tpi,
+		 '' as NrLevantamentos,
+		 concat(ifnull(pn.given_name,''),' ',ifnull(pn.middle_name,''),' ',ifnull(pn.family_name,'')) as NomeCompleto,
+		 pe.gender,
+         datediff(@endDate,pe.birthdate)/365 as age,
+         @location as 'Unidade Sanitaria'
+
+--          concat('Termino TPI de:               ', date(@startDate), ' a ', date(@endDate)) as Profilaxia,
+--          sum(if(datediff(@endDate,pe.birthdate)/365 < 14, 1,0 )) as 'under 14', 
+-- 		 sum(if(datediff(@endDate,pe.birthdate)/365 > 14, 1,0 )) as ' 14+'
          
 from		
 
@@ -143,7 +147,7 @@ left join
  	
 inner join
 (
-select 	e.patient_id,  min(o.obs_datetime) as inicia_profilaxia_inh, e.encounter_datetime as data_consulta_inicio_inh
+select 	e.patient_id,  min(o.obs_datetime) as fim_profilaxia_inh, e.encounter_datetime as data_consulta_fim_inh
 		   from 	patient p
 					inner join encounter e on e.patient_id=p.patient_id
 					inner join obs o on o.encounter_id=e.encounter_id
@@ -153,24 +157,48 @@ select 	e.patient_id,  min(o.obs_datetime) as inicia_profilaxia_inh, e.encounter
            
 ) terminoprofilaxiainh on visita.patient_id=terminoprofilaxiainh.patient_id
 
+left join
+(
+select 	e.patient_id,  min(o.obs_datetime) as inicia_profilaxia_inh, e.encounter_datetime as data_consulta_inicio_inh
+		   from 	patient p
+					inner join encounter e on e.patient_id=p.patient_id
+					inner join obs o on o.encounter_id=e.encounter_id
+		   where 	 e.form_id = 163 and e.voided=0 and p.voided=0 
+           and o.concept_id=6122  and o.value_coded=1256  and o.voided=0	
+           group by e.patient_id
+           
+	) iniciaprofilaxiainh on terminoprofilaxiainh.patient_id=iniciaprofilaxiainh.patient_id
 
+left join 
+(
+select 	e.patient_id, min(o.value_datetime) inicia_profilaxia, e.encounter_datetime as data_consulta_inicio_inh
+										from 	patient p
+										inner join encounter e on e.patient_id=p.patient_id
+										inner join obs o on o.encounter_id=e.encounter_id
+										   where 	e.voided=0 and p.voided=0  and e.form_id in (126,127) 
+										   and o.concept_id=6128 and o.voided=0					
+										   group by e.patient_id
 
+) inicioantigo  on terminoprofilaxiainh.patient_id= inicioantigo.patient_id
   
 union all
 
 
 select 	
-        /*pid.identifier identifier,
+      ' Esperado Termino TPI' as EstadoTPI,
+        pid.identifier identifier,
 		 visita.patient_id,
-        visita.numero_profilaxia_inh,
-		
+		  if(inicioantigo.inicia_profilaxia is null,iniciaprofilaxiainh.data_consulta_inicio_inh , inicioantigo.inicia_profilaxia) as data_inicio_tpi,
+		'' as data_conclusao_tpi,
+         concat('Levantou ',numero_profilaxia_inh,'x') as NrLevantamentos,
 		 concat(ifnull(pn.given_name,''),' ',ifnull(pn.middle_name,''),' ',ifnull(pn.family_name,'')) as NomeCompleto,
 		 pe.gender,
-	     datediff(@endDate,pe.birthdate)/365  idade */
-         @location as 'Unidade Sanitaria',
-         concat('Esperados Termino de: ', date(@startDate), ' a ', date(@endDate)) as Profilaxia,
-         sum(if(datediff(@endDate,pe.birthdate)/365 < 14, 1,0 )) as 'under 14', 
-		 sum(if(datediff(@endDate,pe.birthdate)/365 > 14, 1,0 )) as ' 14+'
+	     datediff(@endDate,pe.birthdate)/365 as age ,
+          @location as 'Unidade Sanitaria'
+ 
+--          concat('Esperados Termino de:   ', date(@startDate), ' a ', date(@endDate)) as Profilaxia,
+--          sum(if(datediff(@endDate,pe.birthdate)/365 < 14, 1,0 )) as 'under 14', 
+-- 		 sum(if(datediff(@endDate,pe.birthdate)/365 > 14, 1,0 )) as ' 14+'
          
 from		
 
@@ -241,3 +269,26 @@ left join
 		
 	) pe on pe.person_id = pn.person_id
  	
+left join
+(
+select 	e.patient_id,  min(o.obs_datetime) as inicia_profilaxia_inh, e.encounter_datetime as data_consulta_inicio_inh
+		   from 	patient p
+					inner join encounter e on e.patient_id=p.patient_id
+					inner join obs o on o.encounter_id=e.encounter_id
+		   where 	 e.form_id = 163 and e.voided=0 and p.voided=0 
+           and o.concept_id=6122  and o.value_coded=1256  and o.voided=0	
+           group by e.patient_id
+           
+	) iniciaprofilaxiainh on visita.patient_id=iniciaprofilaxiainh.patient_id
+
+left join 
+(
+select 	e.patient_id, min(o.value_datetime) inicia_profilaxia, e.encounter_datetime as data_consulta_inicio_inh
+										from 	patient p
+										inner join encounter e on e.patient_id=p.patient_id
+										inner join obs o on o.encounter_id=e.encounter_id
+										   where 	o.value_datetime and e.voided=0 and p.voided=0  and e.form_id in (126,127) 
+										   and o.concept_id=6128 and o.voided=0					
+										   group by e.patient_id
+
+) inicioantigo  on visita.patient_id= inicioantigo.patient_id
